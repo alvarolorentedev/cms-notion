@@ -13,7 +13,7 @@ const propertyMapper = async (value: any) => {
   if (value.type === 'select') return value.select?.name
   if (value.type === 'files') {
     const file = value.files[0]
-    if(!file) return
+    if (!file) return
     if (file.type === 'file') return file.file.url
     if (file.type === 'external') return file.external.url
   }
