@@ -59,7 +59,7 @@ export async function run() {
     database_id: core.getInput('notion-database-id', { required: true })
   })
   const n2m = new NotionToMarkdown({ notionClient: notion })
-  posts.results.foreach(async (post: any) => {
+  await Promise.all(posts.results.map(async (post: any) => {
     const mdblocks = await n2m.pageToMarkdown(post.id)
     const mdString = n2m.toMarkdownString(mdblocks)
     const propEntries = Object.fromEntries(
@@ -91,5 +91,5 @@ export async function run() {
     )
     console.log(`creating: ${destinationFilePath}`)
     fs.writeFileSync(destinationFilePath, content)
-  })
+  }))
 }
