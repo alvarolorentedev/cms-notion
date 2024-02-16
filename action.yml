@@ -26,7 +26,7 @@ inputs:
   file-name-format:
     description: the format of the file to write
     required: true
-    default: {published}-{name}
+    default: "{published}-{name}"
   notion-api-key:
     description: the notion api key
     required: true
