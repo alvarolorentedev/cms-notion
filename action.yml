@@ -7,7 +7,7 @@ branding:
   color: 'purple'
 
 inputs:
-  destination:
+  destination-folder:
     description: the folder for the publised articles
     required: true
     default: ./blog
