@@ -12982,7 +12982,7 @@ async function run() {
         database_id: core.getInput('notion-database-id', { required: true })
     });
     const n2m = new NotionToMarkdown({ notionClient: notion });
-    posts.results.foreach(async (post) => {
+    await Promise.all(posts.results.map(async (post) => {
         const mdblocks = await n2m.pageToMarkdown(post.id);
         const mdString = n2m.toMarkdownString(mdblocks);
         const propEntries = Object.fromEntries((await Promise.all(Object.entries(post.properties || []).map(async ([name, value]) => [
@@ -13004,7 +13004,7 @@ async function run() {
         const destinationFilePath = path.join(process.env.GITHUB_WORKSPACE, destinationFolder, `${fillTemplate(fileNameFormat, propEntries)}.md`);
         console.log(`creating: ${destinationFilePath}`);
         fs.writeFileSync(destinationFilePath, content);
-    });
+    }));
 }
 exports.run = run;
 

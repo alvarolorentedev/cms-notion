@@ -59,37 +59,39 @@ export async function run() {
     database_id: core.getInput('notion-database-id', { required: true })
   })
   const n2m = new NotionToMarkdown({ notionClient: notion })
-  await Promise.all(posts.results.map(async (post: any) => {
-    const mdblocks = await n2m.pageToMarkdown(post.id)
-    const mdString = n2m.toMarkdownString(mdblocks)
-    const propEntries = Object.fromEntries(
-      (
-        await Promise.all(
-          Object.entries(post.properties || []).map(async ([name, value]) => [
-            name,
-            await propertyMapper(value)
-          ])
-        )
-      ).filter(([_, value]) => value)
-    )
-    const yamlFrontMatter = yaml.dump(propEntries)
-    const frontMatterDelimiter = core.getInput('front-matter-delimiter', {
-      required: true
+  await Promise.all(
+    posts.results.map(async (post: any) => {
+      const mdblocks = await n2m.pageToMarkdown(post.id)
+      const mdString = n2m.toMarkdownString(mdblocks)
+      const propEntries = Object.fromEntries(
+        (
+          await Promise.all(
+            Object.entries(post.properties || []).map(async ([name, value]) => [
+              name,
+              await propertyMapper(value)
+            ])
+          )
+        ).filter(([_, value]) => value)
+      )
+      const yamlFrontMatter = yaml.dump(propEntries)
+      const frontMatterDelimiter = core.getInput('front-matter-delimiter', {
+        required: true
+      })
+      const content = `${frontMatterDelimiter}\n${yamlFrontMatter}${frontMatterDelimiter}\n${mdString.parent}`
+      console.log(content)
+      const destinationFolder = core.getInput('destination-folder', {
+        required: true
+      })
+      const fileNameFormat = core.getInput('destination-folder', {
+        required: true
+      })
+      const destinationFilePath = path.join(
+        process.env.GITHUB_WORKSPACE,
+        destinationFolder,
+        `${fillTemplate(fileNameFormat, propEntries)}.md`
+      )
+      console.log(`creating: ${destinationFilePath}`)
+      fs.writeFileSync(destinationFilePath, content)
     })
-    const content = `${frontMatterDelimiter}\n${yamlFrontMatter}${frontMatterDelimiter}\n${mdString.parent}`
-    console.log(content)
-    const destinationFolder = core.getInput('destination-folder', {
-      required: true
-    })
-    const fileNameFormat = core.getInput('destination-folder', {
-      required: true
-    })
-    const destinationFilePath = path.join(
-      process.env.GITHUB_WORKSPACE,
-      destinationFolder,
-      `${fillTemplate(fileNameFormat, propEntries)}.md`
-    )
-    console.log(`creating: ${destinationFilePath}`)
-    fs.writeFileSync(destinationFilePath, content)
-  }))
+  )
 }
