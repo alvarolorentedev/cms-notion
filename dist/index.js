@@ -12924,6 +12924,8 @@ const yaml = __nccwpck_require__(1917);
 const propertyMapper = async (value) => {
     if (value.type === 'title')
         return value.title[0]?.text.content;
+    if (value.type === 'rich_text')
+        return value.rich_text[0]?.text.content;
     if (value.type === 'number')
         return value.number;
     if (value.type === 'email')

@@ -7,6 +7,7 @@ const yaml = require('js-yaml')
 
 const propertyMapper = async (value: any) => {
   if (value.type === 'title') return value.title[0]?.text.content
+  if (value.type === 'rich_text') return value.rich_text[0]?.text.content
   if (value.type === 'number') return value.number
   if (value.type === 'email') return value.email
   if (value.type === 'url') return value.url
