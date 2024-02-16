@@ -93,6 +93,7 @@ export async function run() {
       destinationFolder,
       `${fillTemplate(fileNameFormat, propEntries)}.md`
     )
+    console.log(`creating: ${destinationFilePath}`)
     fs.writeFileSync(destinationFilePath, content)
   })
 }

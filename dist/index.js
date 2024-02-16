@@ -13005,6 +13005,7 @@ async function run() {
             required: true
         });
         const destinationFilePath = path.join(process.env.GITHUB_WORKSPACE, destinationFolder, `${fillTemplate(fileNameFormat, propEntries)}.md`);
+        console.log(`creating: ${destinationFilePath}`);
         fs.writeFileSync(destinationFilePath, content);
     });
 }
