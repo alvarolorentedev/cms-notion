@@ -66,7 +66,10 @@
     ]
   },
   "dependencies": {
-    "@actions/core": "^1.10.1"
+    "@actions/core": "^1.10.1",
+    "@notionhq/client": "^2.2.14",
+    "js-yaml": "^4.1.0",
+    "notion-to-md": "^3.1.1"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",

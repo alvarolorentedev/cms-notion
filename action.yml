@@ -1,23 +1,40 @@
-name: 'The name of your action here'
-description: 'Provide a description here'
-author: 'Your name or organization here'
+name: notion-cms
+description: Notion based cms for any static website generator
+author: alvarolorentedev
 
-# Add your action's branding here. This will appear on the GitHub Marketplace.
 branding:
-  icon: 'heart'
-  color: 'red'
+  icon: 'calendar'
+  color: 'purple'
 
-# Define your inputs here.
 inputs:
-  milliseconds:
-    description: 'Your input description here'
+  destination:
+    description: the folder for the publised articles
     required: true
-    default: '1000'
+    default: ./blog
+  property-release-date:
+    description: the name of the property that refers to when the article will be published
+    required: true
+    default: published
+  property-draft:
+    description: the name of the property that refers if an article is still in draft mode
+    required: true
+    default: draft
+  front-matter-delimiter:
+    description: the ndelimiter characters for front matter in markdown files
+    required: true
+    default: ---
+  file-name-format:
+    description: the format of the file to write
+    required: true
+    default: {published}-{name}
+  notion-api-key:
+    description: the notion api key
+    required: true
+  notion-database-id:
+    description: the notion api key
+    required: true
 
-# Define your outputs here.
-outputs:
-  time:
-    description: 'Your output description here'
+
 
 runs:
   using: node20

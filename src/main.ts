@@ -1,26 +1,96 @@
-import * as core from '@actions/core'
-import { wait } from './wait'
+const { Client } = require("@notionhq/client");
+const { NotionToMarkdown } = require("notion-to-md");
+const core = require('@actions/core')
+const fs = require('fs');
+const path = require('path')
+const yaml = require('js-yaml');
 
-/**
- * The main function for the action.
- * @returns {Promise<void>} Resolves when the action is complete.
- */
-export async function run(): Promise<void> {
-  try {
-    const ms: string = core.getInput('milliseconds')
+const propertyMapper = async (value: any) => {
+    if(value.type === "title")
+        return value.title[0].text.content
+    if(value.type === "number")
+        return value.number
+    if(value.type === "email")
+        return value.email
+    if(value.type === "url")
+        return value.url
+    if(value.type === "select")
+        return value.select.name
+    if(value.type === "files"){
+        const file = value.files[0]
+        if (file.type === "file")
+            return file.file.url
+        if (file.type === "external")
+            return file.external.url
+    }
+    if(value.type === "status")
+        return value.status.name
+    if(value.type === "date")
+        return new Date(value.date.start)
+    if(value.type === "created_time")
+        return new Date(value.created_time)
+    if(value.type === "checkbox")
+        return value.checkbox
+    if(value.type === "multi_select")
+        return value.multi_select.map((multi: any) => multi.name)
+    if(value.type === "created_by" || value.type === "people" || value.type === "last_edited_by")
+        return undefined
+    return JSON.stringify(value)
+}
 
-    // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
-    core.debug(`Waiting ${ms} milliseconds ...`)
+function fillTemplate(template: any, data: any) {
+  return template.replace(/{(\w+)}/g, (match:any, key:any) => data[key] || '');
+}
 
-    // Log the current timestamp, wait, then log the new timestamp
-    core.debug(new Date().toTimeString())
-    await wait(parseInt(ms, 10))
-    core.debug(new Date().toTimeString())
+export async function run() {
+  const destinationFolder = core.getInput('destination-folder', {
+    required: true
+  })
 
-    // Set outputs for other workflow steps to use
-    core.setOutput('time', new Date().toTimeString())
-  } catch (error) {
-    // Fail the workflow run if an error occurs
-    if (error instanceof Error) core.setFailed(error.message)
-  }
+  const notion = new Client({ 
+    auth: core.getInput('notion-api-key', { required: true })
+  });
+  const posts = await notion.databases.query({
+    filter: {
+        "and": [
+            {
+                "property": "scheduled",
+                "date": {
+                    "on_or_before": new Date().toISOString()
+                }
+            },
+            {
+                "property": "draft",
+                "checkbox": {
+                    "equals": false
+                }
+            }
+        ]
+    },
+    database_id: core.getInput('notion-database-id', {required: true })
+});
+const n2m = new NotionToMarkdown({ notionClient: notion });
+posts.results.foreach(async (post: any) => {
+    const mdblocks = await n2m.pageToMarkdown(post.id);
+    const mdString = n2m.toMarkdownString(mdblocks);
+    const propEntries = Object.fromEntries((await Promise.all(Object.entries(post.properties || [])
+    .map(async ([name, value]) => ([name, await propertyMapper(value)]))
+)).filter(([_, value]) => value))
+    const yamlFrontMatter = yaml.dump(propEntries);
+    const frontMatterDelimiter = core.getInput('front-matter-delimiter', {required: true })
+    const content = `${frontMatterDelimiter}\n${yamlFrontMatter}${frontMatterDelimiter}\n${mdString.parent}`;
+    console.log(content);
+    const destinationFolder = core.getInput('destination-folder', {
+      required: true
+    })
+    const fileNameFormat = core.getInput('destination-folder', {
+      required: true
+    })
+    const destinationFilePath = path.join(
+      process.env.GITHUB_WORKSPACE,
+      destinationFolder,
+      `${fillTemplate(fileNameFormat, propEntries)}.md`
+    )
+    fs.writeFileSync(destinationFilePath,content)
+})
 }
