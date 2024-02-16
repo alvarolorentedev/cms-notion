@@ -12946,9 +12946,9 @@ const propertyMapper = async (value) => {
     if (value.type === 'status')
         return value.status?.name;
     if (value.type === 'date')
-        return new Date(value.date?.start);
+        return new Date(value.date?.start).toISOString();
     if (value.type === 'created_time')
-        return new Date(value.created_time);
+        return new Date(value.created_time).toISOString();
     if (value.type === 'checkbox')
         return value.checkbox;
     if (value.type === 'multi_select')

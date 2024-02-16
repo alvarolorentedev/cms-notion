@@ -19,8 +19,9 @@ const propertyMapper = async (value: any) => {
     if (file.type === 'external') return file.external.url
   }
   if (value.type === 'status') return value.status?.name
-  if (value.type === 'date') return new Date(value.date?.start)
-  if (value.type === 'created_time') return new Date(value.created_time)
+  if (value.type === 'date') return new Date(value.date?.start).toISOString()
+  if (value.type === 'created_time')
+    return new Date(value.created_time).toISOString()
   if (value.type === 'checkbox') return value.checkbox
   if (value.type === 'multi_select')
     return value.multi_select.map((multi: any) => multi.name)
