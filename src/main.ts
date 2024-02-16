@@ -83,7 +83,7 @@ export async function run() {
       const destinationFolder = core.getInput('destination-folder', {
         required: true
       })
-      const fileNameFormat = core.getInput('destination-folder', {
+      const fileNameFormat = core.getInput('file-name-format', {
         required: true
       })
       const destinationFilePath = path.join(
