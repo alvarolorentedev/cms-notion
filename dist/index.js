@@ -12959,9 +12959,6 @@ function fillTemplate(template, data) {
     return template.replace(/{(\w+)}/g, (match, key) => data[key] || '');
 }
 async function run() {
-    const destinationFolder = core.getInput('destination-folder', {
-        required: true
-    });
     const notion = new Client({
         auth: core.getInput('notion-api-key', { required: true })
     });
@@ -12969,13 +12966,13 @@ async function run() {
         filter: {
             and: [
                 {
-                    property: 'scheduled',
+                    property: core.getInput('property-release-date', { required: true }),
                     date: {
                         on_or_before: new Date().toISOString()
                     }
                 },
                 {
-                    property: 'draft',
+                    property: core.getInput('property-draft', { required: true }),
                     checkbox: {
                         equals: false
                     }
