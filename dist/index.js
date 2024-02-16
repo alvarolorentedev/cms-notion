@@ -12958,7 +12958,7 @@ const propertyMapper = async (value) => {
     return JSON.stringify(value);
 };
 function fillTemplate(template, data) {
-    return template.replace(/{(\w+)}/g, (match, key) => data[key] || '');
+    return template.replace(/{(\w+)}/g, (match, key) => data[key]?.toString() || '');
 }
 async function run() {
     const notion = new Client({

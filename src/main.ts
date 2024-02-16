@@ -33,7 +33,10 @@ const propertyMapper = async (value: any) => {
 }
 
 function fillTemplate(template: any, data: any) {
-  return template.replace(/{(\w+)}/g, (match: any, key: any) => data[key] || '')
+  return template.replace(
+    /{(\w+)}/g,
+    (match: any, key: any) => data[key]?.toString() || ''
+  )
 }
 
 export async function run() {
