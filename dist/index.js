@@ -12998,7 +12998,6 @@ async function run() {
             required: true
         });
         const content = `${frontMatterDelimiter}\n${yamlFrontMatter}${frontMatterDelimiter}\n${mdString.parent}`;
-        console.log(content);
         const destinationFolder = core.getInput('destination-folder', {
             required: true
         });
