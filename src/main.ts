@@ -36,10 +36,6 @@ function fillTemplate(template: any, data: any) {
 }
 
 export async function run() {
-  const destinationFolder = core.getInput('destination-folder', {
-    required: true
-  })
-
   const notion = new Client({
     auth: core.getInput('notion-api-key', { required: true })
   })
@@ -47,13 +43,13 @@ export async function run() {
     filter: {
       and: [
         {
-          property: 'scheduled',
+          property: core.getInput('property-release-date', { required: true }),
           date: {
             on_or_before: new Date().toISOString()
           }
         },
         {
-          property: 'draft',
+          property: core.getInput('property-draft', { required: true }),
           checkbox: {
             equals: false
           }
