@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       #use this action
-      - uses: alvarolorentedev/notion-cms@main
+      - uses: alvarolorentedev/cms-notion@main
         with:
           notion-api-key: ${{ secrets.NOTION_API_KEY }}
           notion-database-id: ${{ secrets.NOTION_DATABASE_ID }}
