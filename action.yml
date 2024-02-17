@@ -20,18 +20,18 @@ inputs:
     required: true
     default: draft
   front-matter-delimiter:
-    description: the ndelimiter characters for front matter in markdown files
+    description: the delimiter characters for front matter in markdown files
     required: true
     default: ---
   file-name-format:
-    description: the format of the file to write
+    description: the name format of the file to write
     required: true
     default: "{published}-{title}"
   notion-api-key:
     description: the notion api key
     required: true
   notion-database-id:
-    description: the notion api key
+    description: the notion database id that is going to work as CMS
     required: true
 
 
