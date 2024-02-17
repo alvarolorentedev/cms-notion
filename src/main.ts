@@ -1,5 +1,5 @@
-import { TransformPost } from "./models/post/TransformPost"
-import { getPosts } from "./models/post/getPosts"
+import { TransformPost } from './models/post/TransformPost'
+import { getPosts } from './models/post/getPosts'
 
 const { Client } = require('@notionhq/client')
 const core = require('@actions/core')

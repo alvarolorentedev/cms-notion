@@ -12915,50 +12915,12 @@ module.exports.implForWrapper = function (wrapper) {
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.run = void 0;
+const TransformPost_1 = __nccwpck_require__(4923);
+const getPosts_1 = __nccwpck_require__(3247);
 const { Client } = __nccwpck_require__(324);
-const { NotionToMarkdown } = __nccwpck_require__(4377);
 const core = __nccwpck_require__(2186);
 const fs = __nccwpck_require__(7147);
 const path = __nccwpck_require__(1017);
-const yaml = __nccwpck_require__(1917);
-const propertyMapper = async (value) => {
-    if (value.type === 'title')
-        return value.title[0]?.text.content;
-    if (value.type === 'rich_text')
-        return value.rich_text[0]?.text.content;
-    if (value.type === 'number')
-        return value.number;
-    if (value.type === 'email')
-        return value.email;
-    if (value.type === 'url')
-        return value.url;
-    if (value.type === 'select')
-        return value.select?.name;
-    if (value.type === 'files') {
-        const file = value.files[0];
-        if (!file)
-            return;
-        if (file.type === 'file')
-            return file.file.url;
-        if (file.type === 'external')
-            return file.external.url;
-    }
-    if (value.type === 'status')
-        return value.status?.name;
-    if (value.type === 'date')
-        return new Date(value.date?.start).toISOString();
-    if (value.type === 'created_time')
-        return new Date(value.created_time).toISOString();
-    if (value.type === 'checkbox')
-        return value.checkbox;
-    if (value.type === 'multi_select')
-        return value.multi_select.map((multi) => multi.name);
-    if (value.type === 'created_by' ||
-        value.type === 'people' ||
-        value.type === 'last_edited_by')
-        return undefined;
-    return JSON.stringify(value);
-};
 function fillTemplate(template, data) {
     return template.replace(/{(\w+)}/g, (match, key) => data[key] || '');
 }
@@ -12966,7 +12928,63 @@ async function run() {
     const notion = new Client({
         auth: core.getInput('notion-api-key', { required: true })
     });
-    const posts = await notion.databases.query({
+    const posts = await (0, getPosts_1.getPosts)(notion);
+    await Promise.all(posts.results.map(async (post) => {
+        const { propEntries, content } = await (0, TransformPost_1.TransformPost)(notion, post);
+        const destinationFolder = core.getInput('destination-folder', {
+            required: true
+        });
+        const fileNameFormat = core.getInput('file-name-format', {
+            required: true
+        });
+        const destinationFilePath = path.join(process.env.GITHUB_WORKSPACE, destinationFolder, `${fillTemplate(fileNameFormat, propEntries)}.md`);
+        console.log(`creating: ${destinationFilePath}`);
+        fs.writeFileSync(destinationFilePath, content);
+    }));
+}
+exports.run = run;
+
+
+/***/ }),
+
+/***/ 4923:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.TransformPost = void 0;
+const transformPostProperties_1 = __nccwpck_require__(3373);
+const { NotionToMarkdown } = __nccwpck_require__(4377);
+const core = __nccwpck_require__(2186);
+const yaml = __nccwpck_require__(1917);
+async function TransformPost(notionClient, post) {
+    const n2m = new NotionToMarkdown({ notionClient });
+    const mdblocks = await n2m.pageToMarkdown(post.id);
+    const mdString = n2m.toMarkdownString(mdblocks);
+    const propEntries = await (0, transformPostProperties_1.transformPostProperties)(post);
+    const yamlFrontMatter = yaml.dump(propEntries);
+    const frontMatterDelimiter = core.getInput('front-matter-delimiter', {
+        required: true
+    });
+    const content = `${frontMatterDelimiter}\n${yamlFrontMatter}${frontMatterDelimiter}\n${mdString.parent}`;
+    return { propEntries, content };
+}
+exports.TransformPost = TransformPost;
+
+
+/***/ }),
+
+/***/ 3247:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getPosts = void 0;
+const core = __nccwpck_require__(2186);
+async function getPosts(notion) {
+    return await notion.databases.query({
         filter: {
             and: [
                 {
@@ -12985,31 +13003,63 @@ async function run() {
         },
         database_id: core.getInput('notion-database-id', { required: true })
     });
-    const n2m = new NotionToMarkdown({ notionClient: notion });
-    await Promise.all(posts.results.map(async (post) => {
-        const mdblocks = await n2m.pageToMarkdown(post.id);
-        const mdString = n2m.toMarkdownString(mdblocks);
-        const propEntries = Object.fromEntries((await Promise.all(Object.entries(post.properties || []).map(async ([name, value]) => [
-            name,
-            await propertyMapper(value)
-        ]))).filter(([_, value]) => value));
-        const yamlFrontMatter = yaml.dump(propEntries);
-        const frontMatterDelimiter = core.getInput('front-matter-delimiter', {
-            required: true
-        });
-        const content = `${frontMatterDelimiter}\n${yamlFrontMatter}${frontMatterDelimiter}\n${mdString.parent}`;
-        const destinationFolder = core.getInput('destination-folder', {
-            required: true
-        });
-        const fileNameFormat = core.getInput('file-name-format', {
-            required: true
-        });
-        const destinationFilePath = path.join(process.env.GITHUB_WORKSPACE, destinationFolder, `${fillTemplate(fileNameFormat, propEntries)}.md`);
-        console.log(`creating: ${destinationFilePath}`);
-        fs.writeFileSync(destinationFilePath, content);
-    }));
 }
-exports.run = run;
+exports.getPosts = getPosts;
+
+
+/***/ }),
+
+/***/ 3373:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.transformPostProperties = void 0;
+const casesDirectType = ['number', 'email', 'url', 'checkbox', 'created_time'];
+const casesTextType = ['title', 'rich_text'];
+const casesNamedType = ['select', 'status'];
+const mapperStrategies = [
+    {
+        shouldRun: (value) => casesDirectType.includes(value.type),
+        run: (value) => value[value.type]
+    },
+    {
+        shouldRun: (value) => casesTextType.includes(value.type),
+        run: (value) => value[value.type][0]?.text.content
+    },
+    {
+        shouldRun: (value) => casesNamedType.includes(value.type),
+        run: (value) => value[value.type]?.name
+    },
+    {
+        shouldRun: (value) => value.type === 'date',
+        run: (value) => new Date(value.date?.start).toISOString()
+    },
+    {
+        shouldRun: (value) => value.type === 'multi_select',
+        run: (value) => value.multi_select.map((multi) => multi.name)
+    },
+    {
+        shouldRun: (value) => value.type === 'files',
+        run: (value) => {
+            const file = value.files[0];
+            if (!file)
+                return;
+            if (file.type === 'file')
+                return file.file.url;
+            if (file.type === 'external')
+                return file.external.url;
+        }
+    }
+];
+async function transformPostProperties(post) {
+    return Object.fromEntries((await Promise.all(Object.entries(post.properties || []).map(async ([name, value]) => [
+        name,
+        await mapperStrategies.find(strategy => strategy.shouldRun(value))?.run(value)
+    ]))).filter(([_, value]) => value));
+}
+exports.transformPostProperties = transformPostProperties;
 
 
 /***/ }),
